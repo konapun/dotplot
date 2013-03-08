@@ -6,17 +6,22 @@
 
 /*
 * Create a dotplot from 2 nucleotide strings and write results as an image to a file
+*
+* author: Bremen Braun, 2013 for FlyExpress
 */
 int main(int argc, char **argv) {
 	if (argc != 3) {
 		return 1;
 	}
 	
-	int minMatch = 5;
+	int minMatch = 1;
 	dotplot *dp = create_dotplot(argv[1], argv[2]);
-	//dotplot *filtered = filter_dotplot(dp, minMatch);
+	dotplot *filtered = filter_dotplot(dp, minMatch);
 	
-	gdImagePtr image = render_dotplot(dp, 2000, 2000);
+	print_dotplot(dp);
+	printf("---------\n");
+	print_dotplot(filtered);
+	gdImagePtr image = render_dotplot(filtered, 2000, 2000);
 	int did_write = write_image(image, "test.png");
 	gdImageDestroy(image);
 	if (!did_write) {
@@ -29,14 +34,14 @@ int main(int argc, char **argv) {
 
 dotplot *create_dotplot(char *seq1, char *seq2) {
 	dotplot *dp = _dotplot_allocate(strlen(seq1), strlen(seq2));
-	int i, j;
-	for (i = 0; i < dp->width; i++) {
-		for (j = 0; j < dp->height; j++) {
-			if (seq1[i] == seq2[j]) {
-				dp->cells[i][j] = 1;
+	int y, x;
+	for (y = 0; y < dp->height; y++) {
+		for (x = 0; x < dp->width; x++) {
+			if (seq1[x] == seq2[y]) {
+				dp->cells[x][y] = 1;
 			}
 			else {
-				dp->cells[i][j] = 0;
+				dp->cells[x][y] = 0;
 			}
 		}
 	}
@@ -62,10 +67,10 @@ dotplot *_dotplot_allocate(int width, int height) {
 
 dotplot *zero_dotplot(dotplot *dp) {
 	dotplot *zeroed = _dotplot_allocate(dp->width, dp->height);
-	int i, j;
-	for (i = 0; i < zeroed->width; i++) {
-		for (j = 0; j < zeroed->height; j++) {
-			zeroed->cells[i][j] = 0;
+	int y, x;
+	for (y = 0; y < zeroed->height; y++) {
+		for (x = 0; x < zeroed->width; x++) {
+			zeroed->cells[x][y] = 0;
 		}
 	}
 	
@@ -77,10 +82,10 @@ dotplot *clone_dotplot(dotplot *dp) {
 	int **cells = dp->cells;
 	int **cloneCells = clone->cells;
 	
-	int i, j;
-	for (i = 0; i < dp->width; i++) {
-		for (j = 0; j < dp->height; j++) {
-			cloneCells[i][j] = cells[i][j];
+	int y, x;
+	for (y = 0; y < dp->height; y++) {
+		for (x = 0; x < dp->width; x++) {
+			cloneCells[x][y] = cells[x][y];
 		}
 	}
 	
@@ -96,60 +101,87 @@ dotplot *filter_dotplot(dotplot *dp, int matchLength) {
 	dotplot *zeroed = zero_dotplot(dp);
 	int **cells = dp->cells;
 	
-	_filter_left_diagonal(dp, zeroed, matchLength);
-	_filter_right_diagonal(dp, zeroed, matchLength);
+	//_filter_left_diagonals(dp, zeroed, matchLength);
+	_filter_right_diagonals(dp, zeroed, matchLength);
+	return zeroed;
 }
 
 // Build diagonals extending from the upper right to lower left
-void _filter_left_diagonal(dotplot *original, dotplot *filtered, int matchLength) {
-	int stretch, x, y;
-	
-	stretch = 0;
-	x = original->width - 1;
-	y = 0;
-	while (x > 0) { // build diagonals along top
-		if (y < original->height) {
-			if (original->cells[x][y] == 1) {
-				stretch++;
-			}
-			else {
-				if (stretch >= matchLength) {
-					_set_match(filtered, x, y, UL, stretch);
-				}
-			}
-		}
-	}
-	
-	stretch = 0;
-	x = 0;
-	y = 0;
-	//while (y < original->height) { // build diagonals along side
-	//}
+void _filter_left_diagonals(dotplot *original, dotplot *filtered, int matchLength) {
+	int stretch, x;
 }
 
-void _filter_right_diagonal(dotplot *original, dotplot *filtered, int matchLength) {
-	int stretch = 0;
-	int i, j;
-	for (i = 0; i < original->width; i++) {
-		for (j = i; j < original->height; j++) {
-			if (original->cells[i][j] == 1) {
+//TODO: Consolidate code
+void _filter_right_diagonals(dotplot *original, dotplot *filtered, int matchLength) {
+	int stretch, x;
+	
+	x = 0;
+	while (x < original->width) { // upper right
+		stretch = 0;
+		int y = 0;
+		int x2 = x;
+		while (x2 < original->width) {
+			//printf("On cell (%d, %d)\n", x2, y);
+			if (original->cells[x2][y] == 1) {
+				printf("MATCH at (%d, %d)\n", x2, y);
+				stretch++;
+			}
+			else {
+				printf("No match at (%d, %d)\n", x2, y);
+				if (stretch >= matchLength) {
+					printf("Setting match of length %d from (%d, %d)\n", stretch, x2-1, y-1);
+					_set_match(filtered, x2-1, y-1, UL, stretch);
+				}
+				
+				stretch = 0;
+			}
+			
+			x2++;
+			y++;
+		}
+		
+		if (stretch >= matchLength) {
+			printf("Setting match of length %d from (%d, %d)\n", stretch, x2-1, y-1);
+			_set_match(filtered, x2-1, y-1, UL, stretch);
+		}
+		x++;
+	}
+	
+	stretch = 0;
+	x = 1;
+	while (x < original->width) { // lower left
+		int y = 0;
+		int x2 = x;
+		while (x2 < original->width) {
+			if (original->cells[x2][y] == 1) { //FIXME: order?
 				stretch++;
 			}
 			else {
 				if (stretch >= matchLength) {
-					_set_match(filtered, i, j, UR, stretch);
+					//_set_match(filtered, x2, y, UL, stretch); //FIXME: order?
 				}
 			}
+			
+			x2++;
+			y++;
 		}
+		x++;
 	}
+	
+	//printf("RETURNING\n");
 }
 
 void _set_match(dotplot *filtered, int x, int y, direction dir, int length) {
+	printf("Got match of length %d at (%d, %d)\n", length, x, y);
+	printf("Setting (%d, %d) with %d remaining\n", x, y, length);
 	filtered->cells[x][y] = 1;
+	length--;
 	switch(dir) {
 		case UL: // build from (x, y) diagonally to upper left
-			while (length-- > 0) {
-				filtered->cells[x--][y--] = 1;
+			while (length > 0) {
+				printf("Setting (%d, %d) with %d remaining\n", x-1, y-1, length);
+				filtered->cells[--x][--y] = 1;
+				length--;
 			}
 			break;
 		case UR: // build from (x, y) diagonally to upper right
@@ -158,15 +190,15 @@ void _set_match(dotplot *filtered, int x, int y, direction dir, int length) {
 			}
 			break;
 		default:
-			// ignore
+			return;
 	}
 }
 
 void print_dotplot(dotplot *dp) {
-	int i, j;
-	for (i = 0; i < dp->width; i++) {
-		for (j = 0; j < dp->height; j++) {
-			int cell = dp->cells[i][j];
+	int y, x;
+	for (y = 0; y < dp->height; y++) {
+		for (x = 0; x < dp->width; x++) {
+			int cell = dp->cells[x][y];
 			printf("%i", cell);
 		}
 		printf("\n");

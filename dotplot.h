@@ -20,6 +20,6 @@ void print_dotplot(dotplot *dp);
 
 /* Private */
 dotplot *_dotplot_allocate(int width, int height);
-void _filter_left_diagonal(dotplot *original, dotplot *filtered, int matchLength);
-void _filter_right_diagonal(dotplot *original, dotplot *filtered, int matchLength);
+void _filter_left_diagonals(dotplot *original, dotplot *filtered, int matchLength);
+void _filter_right_diagonals(dotplot *original, dotplot *filtered, int matchLength);
 void _set_match(dotplot *filtered, int x, int y, direction dir, int length);

@@ -10,18 +10,14 @@
 * author: Bremen Braun, 2013 for FlyExpress
 */
 int main(int argc, char **argv) {
-	if (argc != 5) {
-		fprintf(stderr, "Wrong number of arguments\nUsage: %s sequence1_id sequence2_id sequence1 sequence2\n", argv[0]);
+	if (argc != 4) {
+		fprintf(stderr, "Wrong number of arguments\nUsage: %s sequence1 sequence2 filename\n", argv[0]);
 		return 1;
 	}
 	
-	char *seq1id = argv[1];
-	char *seq2id = argv[2];
-	char *seq1 = argv[3];
-	char *seq2 = argv[4];
-	
-	char filename[256];
-	snprintf(filename, sizeof filename, "%s_%s.png", seq1id, seq2id);
+	char *seq1 = argv[1];
+	char *seq2 = argv[2];
+	char *filename = argv[3];
 	
 	int minMatch = 5;
 	dotplot *dp = create_dotplot(seq1, seq2);

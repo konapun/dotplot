@@ -10,19 +10,28 @@
 * author: Bremen Braun, 2013 for FlyExpress
 */
 int main(int argc, char **argv) {
-	if (argc != 3) {
+	if (argc != 5) {
+		fprintf(stderr, "Wrong number of arguments\nUsage: %s sequence1_id sequence2_id sequence1 sequence2\n", argv[0]);
 		return 1;
 	}
 	
+	char *seq1id = argv[1];
+	char *seq2id = argv[2];
+	char *seq1 = argv[3];
+	char *seq2 = argv[4];
+	
+	char filename[256];
+	snprintf(filename, sizeof filename, "%s_%s.png", seq1id, seq2id);
+	
 	int minMatch = 5;
-	dotplot *dp = create_dotplot(argv[1], argv[2]);
+	dotplot *dp = create_dotplot(seq1, seq2);
 	dotplot *filtered = filter_dotplot(dp, minMatch);
 	
 	gdImagePtr image = render_dotplot(filtered, 2000, 2000);
-	int did_write = write_image(image, "test.png");
+	int did_write = write_image(image, filename);
 	gdImageDestroy(image);
 	if (!did_write) {
-		fprintf(stderr, "Can't create test.png\n");
+		fprintf(stderr, "Can't create %s\n", filename);
 		return 2;
 	}
 	

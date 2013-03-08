@@ -14,13 +14,10 @@ int main(int argc, char **argv) {
 		return 1;
 	}
 	
-	int minMatch = 1;
+	int minMatch = 5;
 	dotplot *dp = create_dotplot(argv[1], argv[2]);
 	dotplot *filtered = filter_dotplot(dp, minMatch);
 	
-	print_dotplot(dp);
-	printf("---------\n");
-	print_dotplot(filtered);
 	gdImagePtr image = render_dotplot(filtered, 2000, 2000);
 	int did_write = write_image(image, "test.png");
 	gdImageDestroy(image);
@@ -99,37 +96,93 @@ void destroy_dotplot(dotplot *dp) {
 
 dotplot *filter_dotplot(dotplot *dp, int matchLength) {
 	dotplot *zeroed = zero_dotplot(dp);
-	int **cells = dp->cells;
 	
-	//_filter_left_diagonals(dp, zeroed, matchLength);
+	_filter_left_diagonals(dp, zeroed, matchLength);
 	_filter_right_diagonals(dp, zeroed, matchLength);
 	return zeroed;
 }
 
-// Build diagonals extending from the upper right to lower left
+/*
+* Build diagonals extending from the upper right to lower left
+* TODO: Consolidate code
+*/
 void _filter_left_diagonals(dotplot *original, dotplot *filtered, int matchLength) {
 	int stretch, x;
+	
+	x = original->width-1;
+	while (x >= 0) { // upper right (rows)
+		stretch = 0;
+		int y = 0;
+		int x2 = x;
+		while (x2 >= 0) {
+			if (original->cells[x2][y] == 1) {
+				stretch++;
+			}
+			else {
+				if (stretch >= matchLength) {
+					_set_match(filtered, x2+1, y-1, UR, stretch);
+				}
+				
+				stretch = 0;
+			}
+			
+			x2--;
+			y++;
+		}
+		
+		if (stretch >= matchLength) {
+			_set_match(filtered, x2+1, y-1, UR, stretch);
+		}
+		x--;
+	}
+	
+	int y = 1;
+	while (y < original->height) { // lower right (columns)
+		stretch = 0;
+		int x = original->width-1;
+		int y2 = y;
+		while (y2 < original->height && x > 0) {
+			if (original->cells[x][y2] == 1) {
+				stretch++;
+			}
+			else {
+				if (stretch >= matchLength) {
+					_set_match(filtered, x+1, y2-1, UR, stretch);
+				}
+				
+				stretch = 0;
+			}
+			
+			y2++;
+			x--;
+		}
+		
+		if (stretch >= matchLength) {
+			_set_match(filtered, x+1, y2-1, UR, stretch);
+		}
+		
+		y++;
+	}
 }
 
-//TODO: Consolidate code
+/*
+* Build diagonals extending from the upper left to lower right
+* TODO: Consolidate code
+*/
 void _filter_right_diagonals(dotplot *original, dotplot *filtered, int matchLength) {
 	int stretch, x;
 	
 	x = 0;
-	while (x < original->width) { // upper right
+	while (x < original->width) { // upper right (rows)
 		stretch = 0;
 		int y = 0;
 		int x2 = x;
 		while (x2 < original->width) {
-			//printf("On cell (%d, %d)\n", x2, y);
 			if (original->cells[x2][y] == 1) {
-				printf("MATCH at (%d, %d)\n", x2, y);
 				stretch++;
 			}
 			else {
-				printf("No match at (%d, %d)\n", x2, y);
 				if (stretch >= matchLength) {
-					printf("Setting match of length %d from (%d, %d)\n", stretch, x2-1, y-1);
 					_set_match(filtered, x2-1, y-1, UL, stretch);
 				}
 				
@@ -141,52 +194,54 @@ void _filter_right_diagonals(dotplot *original, dotplot *filtered, int matchLeng
 		}
 		
 		if (stretch >= matchLength) {
-			printf("Setting match of length %d from (%d, %d)\n", stretch, x2-1, y-1);
 			_set_match(filtered, x2-1, y-1, UL, stretch);
 		}
 		x++;
 	}
 	
-	stretch = 0;
-	x = 1;
-	while (x < original->width) { // lower left
-		int y = 0;
-		int x2 = x;
-		while (x2 < original->width) {
-			if (original->cells[x2][y] == 1) { //FIXME: order?
+	int y = 1;
+	while (y < original->height) { // lower left (columns)
+		stretch = 0;
+		int x = 0;
+		int y2 = y;
+		while (y2 < original->height && x < original->width) {
+			if (original->cells[x][y2] == 1) {
 				stretch++;
 			}
 			else {
 				if (stretch >= matchLength) {
-					//_set_match(filtered, x2, y, UL, stretch); //FIXME: order?
+					_set_match(filtered, x-1, y2-1, UL, stretch);
 				}
+				
+				stretch = 0;
 			}
 			
-			x2++;
-			y++;
+			y2++;
+			x++;
 		}
-		x++;
+		
+		if (stretch >= matchLength) {
+			_set_match(filtered, x-1, y2-1, UL, stretch);
+		}
+		y++;
 	}
-	
-	//printf("RETURNING\n");
 }
 
 void _set_match(dotplot *filtered, int x, int y, direction dir, int length) {
-	printf("Got match of length %d at (%d, %d)\n", length, x, y);
-	printf("Setting (%d, %d) with %d remaining\n", x, y, length);
 	filtered->cells[x][y] = 1;
 	length--;
 	switch(dir) {
 		case UL: // build from (x, y) diagonally to upper left
 			while (length > 0) {
-				printf("Setting (%d, %d) with %d remaining\n", x-1, y-1, length);
 				filtered->cells[--x][--y] = 1;
 				length--;
 			}
 			break;
 		case UR: // build from (x, y) diagonally to upper right
-			while (length-- > 0) {
+			length++;
+			while (length > 0) {
 				filtered->cells[x++][y--] = 1;
+				length--;
 			}
 			break;
 		default:
@@ -210,12 +265,12 @@ gdImagePtr render_dotplot(dotplot *dp, int width, int height) {
 	int background_color = gdImageColorAllocate(image, 232, 232, 232);
 	int match_color = gdImageColorAllocate(image, 0, 0, 0);
 	
-	int min_width = 1;
-	int min_height = 1;
-	int cell_width = width / dp->width;
-	int cell_height = height / dp->height;
-	int render_width = cell_width;
-	int render_height = cell_height;
+	double min_width = 1.0;
+	double min_height = 1.0;
+	double cell_width = (double) width / (double) dp->width;
+	double cell_height = (double) height / (double) dp->height;
+	double render_width = cell_width;
+	double render_height = cell_height;
 	if (render_width < min_width) {
 		render_width = min_width;
 	}
@@ -224,8 +279,8 @@ gdImagePtr render_dotplot(dotplot *dp, int width, int height) {
 	}
 	
 	int x, y;
-	int pixel_x = 0;
-	int pixel_y = 0;
+	double pixel_x = 0.0;
+	double pixel_y = 0.0;
 	for (y = 0; y < dp->height; y++) {
 		pixel_x = 0;
 		for (x = 0; x < dp->width; x++) { 

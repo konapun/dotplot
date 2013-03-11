@@ -266,9 +266,13 @@ void print_dotplot(dotplot *dp) {
 }
 
 gdImagePtr render_dotplot(dotplot *dp, int width, int height) {
-	gdImagePtr image = gdImageCreate(width, height);
-	int background_color = gdImageColorAllocate(image, 232, 232, 232);
-	int match_color = gdImageColorAllocate(image, 0, 0, 0);
+	/* don't scale up */
+	if (width > dp->width) {
+		width = dp->width;
+	}
+	if (height > dp->height) {
+		height = dp->height;
+	}
 	
 	double min_width = 1.0;
 	double min_height = 1.0;
@@ -282,6 +286,10 @@ gdImagePtr render_dotplot(dotplot *dp, int width, int height) {
 	if (render_height < min_height) {
 		render_height = min_height;
 	}
+	
+	gdImagePtr image = gdImageCreate(width, height);
+	int background_color = gdImageColorAllocate(image, 232, 232, 232);
+	int match_color = gdImageColorAllocate(image, 0, 0, 0);
 	
 	int x, y;
 	double pixel_x = 0.0;

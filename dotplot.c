@@ -220,7 +220,13 @@ dotplot *clone_dotplot(dotplot *dp) {
 
 void destroy_dotplot(dotplot *dp) {
 	int **cells = dp->cells;
-	//TODO
+	int x;
+	for (x = 0; x < dp->width; x++) {
+		free(cells[x]);
+	}
+	
+	free(cells);
+	free(dp);
 }
 
 dotplot *filter_dotplot(dotplot *dp, int matchLength) {

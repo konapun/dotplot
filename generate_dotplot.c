@@ -19,6 +19,7 @@ int main(int argc, char **argv) {
 	int minMatch = 5;
 	dotplot *dp = create_dotplot(seq1, seq2);
 	dotplot *filtered = filter_dotplot(dp, minMatch);
+	destroy_dotplot(dp);
 	
 	gdImagePtr image = render_dotplot(filtered, 2000, 2000);
 	int did_write = write_image(image, filename);
@@ -28,6 +29,7 @@ int main(int argc, char **argv) {
 		return 2;
 	}
 	
+	destroy_dotplot(filtered);
 	return 0;
 }
 

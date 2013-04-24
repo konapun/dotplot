@@ -24,6 +24,28 @@ dotplot *_dotplot_allocate(int width, int height) {
 	return dp;
 }
 
+void _set_match(dotplot *filtered, int x, int y, direction dir, int length) {
+	filtered->cells[x][y] = 1;
+	length--;
+	switch(dir) {
+		case UL: // build from (x, y) diagonally to upper left
+			while (length > 0) {
+				filtered->cells[--x][--y] = 1;
+				length--;
+			}
+			break;
+		case UR: // build from (x, y) diagonally to upper right
+			length++;
+			while (length > 0) {
+				filtered->cells[x++][y--] = 1;
+				length--;
+			}
+			break;
+		default:
+			return;
+	}
+}
+
 /*
 * Build diagonals extending from the upper right to lower left
 * TODO: Consolidate code
@@ -146,28 +168,6 @@ void _filter_right_diagonals(dotplot *original, dotplot *filtered, int matchLeng
 			_set_match(filtered, x-1, y2-1, UL, stretch);
 		}
 		y++;
-	}
-}
-
-void _set_match(dotplot *filtered, int x, int y, direction dir, int length) {
-	filtered->cells[x][y] = 1;
-	length--;
-	switch(dir) {
-		case UL: // build from (x, y) diagonally to upper left
-			while (length > 0) {
-				filtered->cells[--x][--y] = 1;
-				length--;
-			}
-			break;
-		case UR: // build from (x, y) diagonally to upper right
-			length++;
-			while (length > 0) {
-				filtered->cells[x++][y--] = 1;
-				length--;
-			}
-			break;
-		default:
-			return;
 	}
 }
 

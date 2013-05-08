@@ -1,9 +1,8 @@
 ### Dotplot Generator
 A small, fast program and API to generate a dotplot
 
-![small](https://github.com/konapun/dotplot/tree/master/example/test.png "Small dotplot")
-![large](https://github.com/konapun/dotplot/tree/master/example/twi_sprt.png "Large dotplot")
-
+![small](example/test.png "Small dotplot")
+![large](example/twi_sprt.png "Large dotplot")
 
 ## Standalone
 To generate a dotplot from the command line, enter

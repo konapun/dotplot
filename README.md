@@ -10,6 +10,11 @@ To generate a dotplot from the command line, enter
 where SEQUENCE1 is any string, SEQUENCE2 is the string to compare it against, and OUTPUT.PNG is the file the image is written to.
 Note that genplot filters to 5mers by default.
 
+### options
+  * -n <int>: number of bases to use as a minimum for the filter (default: 5)
+  * -w <int>: maximum width (in pixels) of image to generate (default: 2000)
+  * -h <int>: maximum height (in pixels) of image to generate (default: 2000)
+
 ## API
 ### Creating the dotplot
 

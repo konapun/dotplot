@@ -28,5 +28,4 @@ void destroy_dotplot(dotplot *dp);
 dotplot *zero_dotplot(dotplot *dp);
 dotplot *filter_dotplot(dotplot *dp, int matchLength);
 gdImagePtr render_dotplot(dotplot *dp, int width, int height);
-int write_image(gdImagePtr image, char *filename);
 void print_dotplot(dotplot *dp);
